@@ -19,7 +19,7 @@ And there are three ways to build up custom functions:
 + Minimization.
 
 Examples:
-***C<sup>2</sup><sub>9<sub>**(x<sub>1</sub>,x<sub>2</sub>) = 9*. ***P<sup>3</sup><sub>1<sub>**(x<sub>1</sub>,x<sub>2</sub>,x<sub>3</sub>) = x<sub>1</sub>*. ***S** 3=4*.
+***C<sup>2</sup><sub>9<sub>**(x<sub>1</sub>,x<sub>2</sub>) = 9*. ***P<sup>3</sup><sub>1<sub>**(x<sub>1</sub>,x<sub>2</sub>,x<sub>3</sub>) = x<sub>1</sub>*. ***S**(3)=4*.
 
 ### Syntax
 ```bnf
@@ -33,3 +33,7 @@ Examples:
 <comment> = {any character except newline}*
 ```
 White space (spaces and tabs) can appear between any two tokens and should be ignored.
+
+### Disclaimer:
+
+This project is not affiliated with or derived from the earlier language of the same name.

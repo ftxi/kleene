@@ -5,7 +5,7 @@
 #include <sstream>
 #include <ranges>
 
-//#define DEBUGMSG
+#define DEBUGMSG
 
 
 template <std::ranges::input_range R>

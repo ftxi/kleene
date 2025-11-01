@@ -23,35 +23,39 @@ public:
         : std::runtime_error(message) {}
 };
 
-struct expression
+struct expression 
 {
-    unsigned int _dim;
     expression() {}
-    unsigned int dim() const
-    {
-        return _dim;
-    }
+    virtual unsigned int dim() const = 0;
     virtual natural eval(const std::vector<natural>&) const = 0;
     virtual std::string to_string() const = 0;
+    std::string show_type()
+    {
+        return to_string()+"N^"+std::to_string(dim())+" -> N";
+    }
     virtual ~expression() = default;
 };
 
-struct identifer 
+struct identifier
 {
-    identifer() {}
+    identifier() {}
     virtual unsigned int dim() const = 0;
     virtual natural eval(const std::vector<natural>&) const = 0;
-    virtual std::string to_string(bool show_type = false) const = 0;
-    virtual ~identifer() = default;
+    virtual std::string to_string() const = 0;
+    std::string show_type()
+    {
+        return to_string()+"N^"+std::to_string(dim())+" -> N";
+    }
+    ~identifier() = default;
 };
 
-struct variable : public identifer 
+struct variable : public identifier 
 {
     const std::string name;
     const unsigned int _dim;
     std::unique_ptr<expression> defn;
     variable(const std::string& name, unsigned int dim, std::unique_ptr<expression>&& defn)
-        : identifer(), name(name), _dim(dim), defn(std::move(defn)) {}
+        : identifier(), name(name), _dim(dim), defn(std::move(defn)) {}
     unsigned int dim() const override 
     {
         return _dim;
@@ -60,15 +64,11 @@ struct variable : public identifer
     {
         dprint("eval:", defn->to_string());
         natural res = defn->eval(operands);
-        dprint("eval:", to_string(false), range_to_string(operands), "=>", res);
+        dprint("eval:", to_string(), range_to_string(operands), "=>", res);
         return res;
     }
-    std::string to_string(bool show_type=false) const override
+    std::string to_string() const override
     {
-        if(show_type)
-        {
-            return name + " : N^" + std::to_string(_dim) + " -> N";
-        }
         return name;
     }
     bool operator<(const variable& other) const
@@ -81,12 +81,12 @@ struct variable : public identifer
     }
 };
 
-struct constant : public identifer 
+struct constant : public identifier 
 {
     const unsigned int n;
     natural k;
     constant(unsigned int n, unsigned int k)
-        : identifer(), n{n}, k{k} {}
+        : identifier(), n{n}, k{k} {}
     unsigned int dim() const override 
     {
         return n;
@@ -95,18 +95,18 @@ struct constant : public identifer
     {
         return k;
     }
-    std::string to_string(bool) const override
+    std::string to_string() const override
     {
         return "C^" + std::to_string(n) + "_" + std::to_string(k);
     }
 };
 
-struct projection : public identifer 
+struct projection : public identifier 
 {
     const unsigned int n;
     const unsigned int k;
     projection(unsigned int n, unsigned int k)
-        : identifer(), n{n}, k{k} 
+        : identifier(), n{n}, k{k} 
     {
         if(k == 0 || k > n)
         {
@@ -121,16 +121,16 @@ struct projection : public identifer
     {
         return operands[k-1];
     }
-    std::string to_string(bool) const override
+    std::string to_string() const override
     {
         return "P^" + std::to_string(n) + "_" + std::to_string(k);
     }
 };
 
-struct successor : public identifer 
+struct successor : public identifier 
 {
     successor()
-        : identifer() {}
+        : identifier() {}
     unsigned int dim() const override 
     {
         return 1;
@@ -139,7 +139,7 @@ struct successor : public identifer
     {
         return operands[0]+1;
     }
-    std::string to_string(bool) const override
+    std::string to_string() const override
     {
         return "S";
     }
@@ -147,17 +147,22 @@ struct successor : public identifer
 
 struct composition : public expression
 {
-    std::shared_ptr<identifer> f;
-    std::vector<std::shared_ptr<identifer>> gs;
-    composition(const std::shared_ptr<identifer>& f,
-                const std::vector<std::shared_ptr<identifer>>& gs)
+    std::shared_ptr<expression> f;
+    std::vector<std::shared_ptr<expression>> gs;
+    unsigned int _dim;
+    unsigned int dim() const override
+    {
+        return _dim;
+    }
+    composition(const std::shared_ptr<expression>& f,
+                const std::vector<std::shared_ptr<expression>>& gs)
         : f(f), gs(gs)
     {
         // N^a --g_1,g_2,...,g_b--> N^b --f--> N
         unsigned int b = f->dim();
         if(gs.size() != b)
         {
-            throw parse_error("Arity mismatch in composition: "+std::to_string(gs.size())+" identifers provided but "+std::to_string(b)+" expected by "+f->to_string(true));
+            throw parse_error("Arity mismatch in composition: "+std::to_string(gs.size())+" identifers provided but "+std::to_string(b)+" expected by "+f->show_type());
         }
         if(gs.size() == 0)
         {
@@ -168,7 +173,7 @@ struct composition : public expression
         {
             if(g->dim() != a)
             {
-                throw parse_error("Dimension mismatch in composition: "+g->to_string(true)+" does not match "+gs[0]->to_string(true));
+                throw parse_error("Dimension mismatch in composition: "+g->show_type()+" does not match "+gs[0]->show_type());
             }
         }
         _dim = a;
@@ -177,7 +182,7 @@ struct composition : public expression
     {
         std::vector<natural> vs;
         vs.resize(operands.size());
-        std::transform(gs.begin(), gs.end(), vs.begin(), [&operands](std::shared_ptr<identifer> g){
+        std::transform(gs.begin(), gs.end(), vs.begin(), [&operands](std::shared_ptr<expression> g){
             return g->eval(operands);
         });
         return f->eval(vs);
@@ -200,10 +205,15 @@ struct composition : public expression
 
 struct primitive_recursion : public expression
 {
-    std::shared_ptr<identifer> f;
-    std::shared_ptr<identifer> g;
-    primitive_recursion(const std::shared_ptr<identifer>& f,
-                        const std::shared_ptr<identifer>& g)
+    std::shared_ptr<expression> f;
+    std::shared_ptr<expression> g;
+    unsigned int _dim;
+    unsigned int dim() const override
+    {
+        return _dim;
+    }
+    primitive_recursion(const std::shared_ptr<expression>& f,
+                        const std::shared_ptr<expression>& g)
         : f(f), g(g)
     {
         // N^a --f--> N
@@ -211,7 +221,7 @@ struct primitive_recursion : public expression
         // overall: N^{a+1} --f@g--> N
         if(f->dim() + 2 != g->dim())
         {
-            throw parse_error("Dimension mismatch in primitive recursion: "+g->to_string(true)+" does not match "+f->to_string(true));
+            throw parse_error("Dimension mismatch in primitive recursion: "+g->show_type()+" does not match "+f->show_type());
         }
         _dim = f->dim() + 1;
     }
@@ -234,14 +244,19 @@ struct primitive_recursion : public expression
 
 struct minimization : public expression
 {
-    std::shared_ptr<identifer> f;
-    minimization(const std::shared_ptr<identifer>& f)
+    std::shared_ptr<expression> f;
+    unsigned int _dim;
+    unsigned int dim() const override
+    {
+        return _dim;
+    }
+    minimization(const std::shared_ptr<expression>& f)
         : f(f)
     {
         // N^{a+1} --f--> N^1
         if(f->dim() < 1)
         {
-            throw parse_error("Dimension mismatch in minimization: "+f->to_string(true)+" has insufficient dimension");
+            throw parse_error("Dimension mismatch in minimization: "+f->show_type()+" has insufficient dimension");
         }
         _dim = f->dim() - 1;
     }
@@ -258,6 +273,25 @@ struct minimization : public expression
     std::string to_string() const override
     {
         return "$ " + f->to_string();
+    }
+};
+
+struct atomic_exp : public expression
+{
+    std::shared_ptr<identifier> idt;
+    atomic_exp(std::shared_ptr<identifier> idt)
+        : idt(idt) {}
+    unsigned int dim() const override
+    {
+        return idt->dim();
+    }
+    natural eval(const std::vector<natural> &operands) const override
+    {
+        return idt->eval(operands);
+    }
+    std::string to_string() const override
+    {
+        return idt->to_string();
     }
 };
 

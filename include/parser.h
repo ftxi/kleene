@@ -11,31 +11,21 @@
 #include "types.h"
 
 /*
-<program> = <line> {'\n'+ <line>}*
-<line> = <variable> '=' <expression> [';' <comment>]
-<expression> = <identifer> '(' <identifer> {',' <identifer>}* ')' 
-             | <identifer> '@' <identifer>
-             | '$' <identifer>
-<identifer> = 'C^'<num>'_'<num> | 'P^'<num>'_'<num> | 'S' | <variable>
-<variable> = {'a' | ... | 'z'}{'A' | ... | 'Z' | 'a' | ... | 'z' | '0' | '1' | ... | '9'}*
-<comment> = {any character except newline}*
+<program>     ::= <line> {'\n'+ <line>}*
+<line>        ::= <variable> '=' <expression> [';' <comment>]
+<expression>  ::= <comp-exp> '@' <comp-exp>
+                | '$' <comp-exp>
+                | <comp-exp>
+<comp-exp>    ::= <primary-exp> ['(' <expression> {',' <expression>}* ')']
+<primary-exp> ::= <atomic-exp> | '(' <expression> ')'
+<atomic-exp>  ::= <identifer>
+<identifer>   ::= 'C^'<num>'_'<num> | 'P^'<num>'_'<num> | 'S' | <variable>
+<variable> ::= {'a' | ... | 'z'}{'A' | ... | 'Z' | 'a' | ... | 'z' | '0' | '1' | ... | '9'}*
+<comment>  ::= {any character except newline}*
 
 White space (spaces and tabs) can appear between any two tokens and should be ignored.
 */
 
-
-// struct line 
-// {
-//     std::shared_ptr<variable> lvalue;
-//     std::unique_ptr<expression> rvalue;
-//     line(const std::shared_ptr<variable>& lvalue,
-//          std::unique_ptr<expression>&& rvalue)
-//         : lvalue(lvalue), rvalue(std::move(rvalue)) {}
-//     std::string to_string() const 
-//     {
-//         return lvalue->to_string(true) + " = " + rvalue->to_string() + "\n";
-//     }
-// };
 
 enum class token_t {
     NEWLINE,
@@ -46,6 +36,7 @@ enum class token_t {
     VARIABLE,
     END
 };
+std::ostream& operator<<(std::ostream& os, token_t t);
 
 
 class parser 
@@ -68,10 +59,13 @@ public:
     // Lexer
     void next_token();
     // Parser
-    std::shared_ptr<identifer> parse_identifer();
+    std::shared_ptr<identifier> parse_identifer();
     std::unique_ptr<composition> parse_composition();
     std::unique_ptr<primitive_recursion> parse_primitive_recursion();
     std::unique_ptr<minimization> parse_minimization();
+    std::unique_ptr<expression> parse_expression();
+    std::unique_ptr<expression> parse_comp_exp();
+    std::unique_ptr<expression> parse_atomic_exp();
     void parse_line();
     void parse();
     // Interpreter
