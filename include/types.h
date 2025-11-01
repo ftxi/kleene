@@ -31,7 +31,7 @@ struct expression
     virtual std::string to_string() const = 0;
     std::string show_type()
     {
-        return to_string()+"N^"+std::to_string(dim())+" -> N";
+        return to_string()+":N^"+std::to_string(dim())+" -> N";
     }
     virtual ~expression() = default;
 };
@@ -97,7 +97,7 @@ struct constant : public identifier
     }
     std::string to_string() const override
     {
-        return "C^" + std::to_string(n) + "_" + std::to_string(k);
+        return "C" + std::to_string(n) + "_" + std::to_string(k);
     }
 };
 
@@ -110,7 +110,7 @@ struct projection : public identifier
     {
         if(k == 0 || k > n)
         {
-            throw parse_error("Invalid projection indices: P^" + std::to_string(n) + "_" + std::to_string(k));
+            throw parse_error("Invalid projection indices: P" + std::to_string(n) + "_" + std::to_string(k));
         }
     }
     unsigned int dim() const override
@@ -123,7 +123,7 @@ struct projection : public identifier
     }
     std::string to_string() const override
     {
-        return "P^" + std::to_string(n) + "_" + std::to_string(k);
+        return "P" + std::to_string(n) + "_" + std::to_string(k);
     }
 };
 
@@ -155,8 +155,10 @@ struct composition : public expression
         return _dim;
     }
     composition(const std::shared_ptr<expression>& f,
-                const std::vector<std::shared_ptr<expression>>& gs)
-        : f(f), gs(gs)
+                const std::vector<std::shared_ptr<expression>>& gs,
+                unsigned int dim)
+    : f(f), gs(gs), _dim(dim) {}
+    static std::unique_ptr<composition> create(const std::shared_ptr<expression>& f, const std::vector<std::shared_ptr<expression>>& gs)
     {
         // N^a --g_1,g_2,...,g_b--> N^b --f--> N
         unsigned int b = f->dim();
@@ -176,7 +178,7 @@ struct composition : public expression
                 throw parse_error("Dimension mismatch in composition: "+g->show_type()+" does not match "+gs[0]->show_type());
             }
         }
-        _dim = a;
+        return std::make_unique<composition>(f, gs, a);
     }
     natural eval(const std::vector<natural> &operands) const override
     {
@@ -212,9 +214,9 @@ struct primitive_recursion : public expression
     {
         return _dim;
     }
-    primitive_recursion(const std::shared_ptr<expression>& f,
-                        const std::shared_ptr<expression>& g)
-        : f(f), g(g)
+    primitive_recursion(const std::shared_ptr<expression>& f, const std::shared_ptr<expression>& g, unsigned int dim)
+    : f(f), g(g), _dim(dim) {}
+    static std::unique_ptr<primitive_recursion> create(const std::shared_ptr<expression>& f, const std::shared_ptr<expression>& g)
     {
         // N^a --f--> N
         // N^{a+2} --g--> N
@@ -223,11 +225,12 @@ struct primitive_recursion : public expression
         {
             throw parse_error("Dimension mismatch in primitive recursion: "+g->show_type()+" does not match "+f->show_type());
         }
-        _dim = f->dim() + 1;
+        unsigned int dim = f->dim() + 1;
+        return std::make_unique<primitive_recursion>(f, g, dim);
     }
     natural eval(const std::vector<natural> &operands) const override
     {
-        std::vector xs(operands.begin()+1, operands.end());
+        std::vector<natural> xs(operands.begin()+1, operands.end());
         std::vector<natural> ys = {0,f->eval(xs)};
         ys.insert(ys.end(), xs.begin(), xs.end());
         for(ys[0] = 0; ys[0] < operands[0]; ys[0]++)
@@ -250,15 +253,17 @@ struct minimization : public expression
     {
         return _dim;
     }
-    minimization(const std::shared_ptr<expression>& f)
-        : f(f)
+    minimization(const std::shared_ptr<expression>& f, unsigned int dim)
+    : f(f), _dim(dim) {}
+    static std::unique_ptr<minimization> create(const std::shared_ptr<expression>& f)
     {
         // N^{a+1} --f--> N^1
         if(f->dim() < 1)
         {
             throw parse_error("Dimension mismatch in minimization: "+f->show_type()+" has insufficient dimension");
         }
-        _dim = f->dim() - 1;
+        int dim = f->dim() - 1;
+        return std::make_unique<minimization>(f, dim);
     }
     natural eval(const std::vector<natural> &operands) const override
     {
@@ -281,6 +286,10 @@ struct atomic_exp : public expression
     std::shared_ptr<identifier> idt;
     atomic_exp(std::shared_ptr<identifier> idt)
         : idt(idt) {}
+    static std::unique_ptr<atomic_exp> create(std::shared_ptr<identifier> idt)
+    {
+        return std::make_unique<atomic_exp>(idt);
+    }
     unsigned int dim() const override
     {
         return idt->dim();

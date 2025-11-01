@@ -14,6 +14,7 @@ std::ostream& operator<<(std::ostream& os, token_t t) {
         case token_t::PROJ:       return os << "PROJ";
         case token_t::SUCC:       return os << "SUCC";
         case token_t::VARIABLE:   return os << "VARIABLE";
+        case token_t::NUM:        return os << "NUM";
         case token_t::END:        return os << "END";
     }
     return os; // optional: silence compiler warning
@@ -84,67 +85,59 @@ void parser::next_token()
         break;
         
     case 'C':
-        // CONST: C^<num>_<num>
-        if (pos + 1 < input.size() && input[pos + 1] == '^') {
-            pos += 2; // Skip 'C^'
-            if (pos >= input.size() || !isdigit(input[pos])) {
-                throw parse_error("Expected digit after 'C^'");
-            }
-            // Read first number
-            num1 = 0;
-            while (pos < input.size() && isdigit(input[pos])) {
-                num1 = num1 * 10 + (input[pos] - '0');
-                pos++;
-            }
-            if (pos >= input.size() || input[pos] != '_') {
-                throw parse_error("Expected '_' in CONST token");
-            }
-            pos++; // Skip '_'
-            if (pos >= input.size() || !isdigit(input[pos])) {
-                throw parse_error("Expected digit after '_' in CONST token");
-            }
-            // Read second number
-            num2 = 0;
-            while (pos < input.size() && isdigit(input[pos])) {
-                num2 = num2 * 10 + (input[pos] - '0');
-                pos++;
-            }
-            token = token_t::CONST;
-        } else {
-            throw parse_error("Expected '^' after 'C'");
+        // CONST: C<num>_<num>
+        pos++;
+        if (pos >= input.size() || !isdigit(input[pos])) {
+            throw parse_error("Expected digit after 'C'");
         }
+        // Read first number
+        num1 = 0;
+        while (pos < input.size() && isdigit(input[pos])) {
+            num1 = num1 * 10 + (input[pos] - '0');
+            pos++;
+        }
+        if (pos >= input.size() || input[pos] != '_') {
+            throw parse_error("Expected '_' in CONST token");
+        }
+        pos++; // Skip '_'
+        if (pos >= input.size() || !isdigit(input[pos])) {
+            throw parse_error("Expected digit after '_' in CONST token");
+        }
+        // Read second number
+        num2 = 0;
+        while (pos < input.size() && isdigit(input[pos])) {
+            num2 = num2 * 10 + (input[pos] - '0');
+            pos++;
+        }
+        token = token_t::CONST;
         break;
         
     case 'P':
         // PROJ: P^<num>_<num>
-        if (pos + 1 < input.size() && input[pos + 1] == '^') {
-            pos += 2; // Skip 'P^'
-            if (pos >= input.size() || !isdigit(input[pos])) {
-                throw parse_error("Expected digit after 'P^'");
-            }
-            // Read first number
-            num1 = 0;
-            while (pos < input.size() && isdigit(input[pos])) {
-                num1 = num1 * 10 + (input[pos] - '0');
-                pos++;
-            }
-            if (pos >= input.size() || input[pos] != '_') {
-                throw parse_error("Expected '_' in PROJ token");
-            }
-            pos++; // Skip '_'
-            if (pos >= input.size() || !isdigit(input[pos])) {
-                throw parse_error("Expected digit after '_' in PROJ token");
-            }
-            // Read second number
-            num2 = 0;
-            while (pos < input.size() && isdigit(input[pos])) {
-                num2 = num2 * 10 + (input[pos] - '0');
-                pos++;
-            }
-            token = token_t::PROJ;
-        } else {
-            throw parse_error("Expected '^' after 'P'");
+        pos++;
+        if (pos >= input.size() || !isdigit(input[pos])) {
+            throw parse_error("Expected digit after 'P'");
         }
+        // Read first number
+        num1 = 0;
+        while (pos < input.size() && isdigit(input[pos])) {
+            num1 = num1 * 10 + (input[pos] - '0');
+            pos++;
+        }
+        if (pos >= input.size() || input[pos] != '_') {
+            throw parse_error("Expected '_' in PROJ token");
+        }
+        pos++; // Skip '_'
+        if (pos >= input.size() || !isdigit(input[pos])) {
+            throw parse_error("Expected digit after '_' in PROJ token");
+        }
+        // Read second number
+        num2 = 0;
+        while (pos < input.size() && isdigit(input[pos])) {
+            num2 = num2 * 10 + (input[pos] - '0');
+            pos++;
+        }
+        token = token_t::PROJ;
         break;
         
     case 'S':
@@ -163,7 +156,16 @@ void parser::next_token()
                 pos++;
             }
             token = token_t::VARIABLE;
-        } else {
+        }
+        else if(isdigit(input[pos])) {
+            num2 = num1 = 0;
+            while (pos < input.size() && isdigit(input[pos])) {
+                num2 = num2 * 10 + (input[pos] - '0');
+                pos++;
+            }
+            token = token_t::NUM;
+        }
+        else {
             throw parse_error(std::string("Unexpected character: '") + input[pos] + "'");
         }
         break;
@@ -188,6 +190,7 @@ std::shared_ptr<identifier> parser::parse_identifer()
     switch(token)
     {
         case token_t::CONST: // parse constant
+        case token_t::NUM: // number is just a syntatic sugar for C^0_k
             result = std::make_shared<constant>(num1, num2);
             next_token();
             return result;
@@ -230,11 +233,11 @@ std::unique_ptr<composition> parser::parse_composition()
         }
         else if(token != token_t::RIGHT_PAREN)
         {
-            PARSE_FAIL;
+            throw parse_error("Expect ')' in compositon");
         }
     }
     next_token();
-    return std::make_unique<composition>(f, gs);
+    return composition::create(f, gs);
 }
 
 std::unique_ptr<primitive_recursion> parser::parse_primitive_recursion()
@@ -245,8 +248,11 @@ std::unique_ptr<primitive_recursion> parser::parse_primitive_recursion()
     if(token != token_t::PR_SYM) PARSE_FAIL;
     next_token();
     std::shared_ptr<expression> g = parse_comp_exp();
-    if(g == nullptr) PARSE_FAIL;
-    return std::make_unique<primitive_recursion>(f, g);
+    if(g == nullptr)
+    {
+        throw parse_error("Expect expression after '@'");
+    }
+    return primitive_recursion::create(f, g);
 }
 
 std::unique_ptr<minimization> parser::parse_minimization()
@@ -255,8 +261,11 @@ std::unique_ptr<minimization> parser::parse_minimization()
     if(token != token_t::MIN_SYM) PARSE_FAIL;
     next_token();
     std::shared_ptr<expression> f = parse_comp_exp();
-    if(f == nullptr) PARSE_FAIL;
-    return std::make_unique<minimization>(f);
+    if(f == nullptr)
+    {
+        throw parse_error("Expect expression after '$'");
+    }
+    return minimization::create(f);
 }
 
 /*
@@ -315,8 +324,14 @@ std::unique_ptr<expression> parser::parse_atomic_exp()
     {
         next_token();
         std::unique_ptr<expression> expr = parse_expression();
-        if(expr == nullptr) PARSE_FAIL;
-        if(token != token_t::RIGHT_PAREN) PARSE_FAIL;
+        if(expr == nullptr)
+        {
+            throw parse_error("Expect expression between parenthesis");
+        }
+        if(token != token_t::RIGHT_PAREN)
+        {
+            throw parse_error("Expect ')' after '('");
+        }
         next_token();
         return expr;
     }
@@ -346,22 +361,10 @@ void parser::parse_line()
     if(token != token_t::EQUAL) PARSE_FAIL;
     next_token();
     // parse rvalue
-    std::unique_ptr<expression> rvalue = nullptr;
-    // try composition
-    rvalue = parse_composition();
+    std::unique_ptr<expression> rvalue = parse_expression();
     if(rvalue == nullptr)
     {
-        // try primitive recursion
-        rvalue = parse_primitive_recursion();
-        if(rvalue == nullptr)
-        {
-            // try minimization
-            rvalue = parse_minimization();
-            if(rvalue == nullptr)
-            {
-                PARSE_FAIL;
-            }
-        }
+        throw parse_error("Unknown expression");
     }
     // add variable to context
     auto var = std::make_shared<variable>(var_name_local, rvalue->dim(), std::move(rvalue));
@@ -391,13 +394,17 @@ void parser::parse()
     }
     catch(const parse_error &err)
     {
+        char var = input[pos];
+        if(pos>0) pos--;
+        while(isspace(input[pos]) && pos > 0)
+            pos--;
         size_t line_num = std::count(input.begin(), input.begin() + std::min(pos, input.size()), '\n');
         std::cerr << "In line " << line_num << ":\n";
         size_t start = input.rfind('\n', pos);
         if (start == std::string::npos)
             start = 0;
         else
-            start += 1; // move past '\n'
+            start += start < pos ? 1 : 0; // move past '\n'
 
         size_t end = input.find('\n', pos);
         if (end == std::string::npos)

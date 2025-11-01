@@ -19,7 +19,7 @@
 <comp-exp>    ::= <primary-exp> ['(' <expression> {',' <expression>}* ')']
 <primary-exp> ::= <atomic-exp> | '(' <expression> ')'
 <atomic-exp>  ::= <identifer>
-<identifer>   ::= 'C^'<num>'_'<num> | 'P^'<num>'_'<num> | 'S' | <variable>
+<identifer>   ::= 'C'<num>'_'<num> | 'P'<num>'_'<num> | 'S' | <variable>
 <variable> ::= {'a' | ... | 'z'}{'A' | ... | 'Z' | 'a' | ... | 'z' | '0' | '1' | ... | '9'}*
 <comment>  ::= {any character except newline}*
 
@@ -33,7 +33,7 @@ enum class token_t {
     LEFT_PAREN, RIGHT_PAREN,
     COMMA, PR_SYM, MIN_SYM,
     CONST, PROJ, SUCC,
-    VARIABLE,
+    VARIABLE, NUM,
     END
 };
 std::ostream& operator<<(std::ostream& os, token_t t);
