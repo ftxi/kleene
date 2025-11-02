@@ -1,0 +1,15 @@
+
+;logical operators
+or = P1_1 @ C3_1
+and = C1_0 @ P3_3
+
+; comparsion operators
+; gt(a,b) > 0 iff a > b
+gt = sub
+; ge(a,b) > 0 iff a >= b
+ge = rsub(P2_2, S(P2_1)) ; (a,b) ~> S(a) - b
+lt = rsub
+le = rsub(P2_1, S(P2_2))
+eq = and(le(P2_1, P2_2), ge(P2_1, P2_2))
+; not(0) = 1; not(n+1) = 0
+not = 1 @ C2_0

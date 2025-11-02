@@ -1,0 +1,36 @@
+
+; +, - and *
+add = P1_1 @ S(P3_2)
+mul = C1_0 @ add(P3_3, P3_2)
+pred = 0 @ P2_1
+rsub = P1_1 @ pred(P3_2) ; (a,b) ~> b-a
+sub = rsub(P2_2, P2_1) ; (a,b) ~> a-b
+
+; if(p,a,b) = if p!=0 then a else b
+if = P2_2 @ P4_3
+lt = rsub
+le = rsub(P2_1, S(P2_2))
+
+max = if(lt(P2_1, P2_2), P2_2, P2_1)
+min = if(lt(P2_1, P2_2), P2_1, P2_2)
+
+; integer division (the primitive recursive version)
+; div(a,b) = floor(a/b) if b!=0
+; div(a,0) = a
+; there are many, many possible optimizations for this, which I don't implement
+loopDiv = P2_1 @ if(lt(P4_3, mul(P4_4,sub(P4_3,P4_1))), pred(sub(P4_3,P4_1)), P4_2)
+div = loopDiv(P2_1, P2_1, P2_2)
+
+; mod(a,b) = a - b*div(a,b)
+mod = rsub(mul(P2_2, div(P2_1, P2_2)), P2_1)
+
+; isprime (the primitive recursive version); works for input > 1
+loop0 = C1_1 @ if(lt(P3_1, C3_2), C3_1, if(mod(P3_3, P3_1), P3_2, C3_0))
+isprime0 = loop0(P1_1, P1_1)
+
+; isprime (the optimized version); works for input > 1
+loop = C1_1 @ if(mod(P3_3, S(S(P3_1))), P3_2, C3_0)
+isqrt = pred($le(mul(P2_1, P2_1), P2_2))
+isprime = loop(sub(min(max(isqrt(P1_1), C1_4), P1_1), C1_2), P1_1)
+
+main = isprime

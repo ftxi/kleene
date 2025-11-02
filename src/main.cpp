@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
             args.reserve(argc-i);
             for(i++; i < argc; i++)
             {
-                args.push_back(current_arg);
+                args.push_back(argv[i]);
             }
         }
     }
@@ -179,7 +179,11 @@ int main(int argc, char* argv[])
         }
         catch (std::invalid_argument)
         {
+            for(auto a:args)
+                std::cerr << " " << a;
+            std::cerr << "\n";
             std::cerr << "Found non-numerical arguments with --numeric_args" << std::endl;
+            exit(2);
         }
     }
     // phase 4: evaluate entry point
@@ -193,8 +197,24 @@ int main(int argc, char* argv[])
     }
     else if(v != nullptr)
     {
-        natural ans = p->eval_var(v, operands);
-        std::cout << ans << std::endl;
+        if(v->dim() != operands.size())
+        {
+            if(!interactive || operands.size() > 0)
+            {
+                std::cerr << "Entry point '" << entry_point << "' expects " << v->dim() << " arguments,";
+                std::cerr << " but " << operands.size() << " provided; abort" << std::endl;
+                return 2;
+            }
+            else
+            {
+                std::cout << entry_point << ": N^" << v->dim() << " -> N" << std::endl;
+            }
+        }
+        else
+        {
+            natural ans = p->eval_var(v, operands);
+            std::cout << ans << std::endl;
+        }
     }
     // phase 5: repl
     if(interactive)
