@@ -1,0 +1,5 @@
+id = P1_1
+add = id @ S(P3_2)
+mul = C1_0 @ add(P3_3, P3_2)
+
+main = mul(6,7) ; calculate 6*7

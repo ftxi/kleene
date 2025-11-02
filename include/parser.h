@@ -41,21 +41,20 @@ std::ostream& operator<<(std::ostream& os, token_t t);
 
 class parser 
 {
-    //cache for token values
-    token_t token;
     std::string input;
-    size_t pos;
-    int num1, num2;
-    std::string var_name;
-    
+    //cache for token values
+    struct {
+        token_t token;
+        size_t pos;
+        int num1, num2;
+        std::string var_name;
+    } cache;
     std::vector<std::shared_ptr<variable>> program;
     std::map<std::string, size_t> context;
-
+    parser(const std::string &input) noexcept : input(input) {}
 public:
-    parser(const std::string &input) : input(input), pos(0) 
-    {
-        next_token();
-    }
+    static std::unique_ptr<parser> create(std::string input);
+    void set_input(const std::string &input);
     // Lexer
     void next_token();
     // Parser
@@ -66,12 +65,13 @@ public:
     std::unique_ptr<expression> parse_expression();
     std::unique_ptr<expression> parse_comp_exp();
     std::unique_ptr<expression> parse_atomic_exp();
-    void parse_line();
+    std::shared_ptr<variable> parse_line();
     void parse();
     // Interpreter
+    natural eval_var(std::shared_ptr<variable> v, std::vector<natural> operands);
     natural eval_var(std::string s, std::vector<natural> operands);
     // help functions
-    std::shared_ptr<variable> get_variable(const std::string& name);
+    std::shared_ptr<variable> get_variable(const std::string& name) noexcept;
     void add_variable(const std::shared_ptr<variable>& var);
     std::string to_string() const;
 };

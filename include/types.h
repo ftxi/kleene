@@ -25,8 +25,8 @@ public:
 
 struct expression 
 {
-    expression() {}
-    virtual unsigned int dim() const = 0;
+    expression() noexcept {}
+    virtual unsigned int dim() const noexcept = 0;
     virtual natural eval(const std::vector<natural>&) const = 0;
     virtual std::string to_string() const = 0;
     std::string show_type()
@@ -38,8 +38,8 @@ struct expression
 
 struct identifier
 {
-    identifier() {}
-    virtual unsigned int dim() const = 0;
+    identifier() noexcept {}
+    virtual unsigned int dim() const noexcept = 0;
     virtual natural eval(const std::vector<natural>&) const = 0;
     virtual std::string to_string() const = 0;
     std::string show_type()
@@ -54,9 +54,9 @@ struct variable : public identifier
     const std::string name;
     const unsigned int _dim;
     std::unique_ptr<expression> defn;
-    variable(const std::string& name, unsigned int dim, std::unique_ptr<expression>&& defn)
+    variable(const std::string& name, unsigned int dim, std::unique_ptr<expression>&& defn) noexcept
         : identifier(), name(name), _dim(dim), defn(std::move(defn)) {}
-    unsigned int dim() const override 
+    unsigned int dim() const noexcept override
     {
         return _dim;
     }
@@ -85,9 +85,9 @@ struct constant : public identifier
 {
     const unsigned int n;
     natural k;
-    constant(unsigned int n, unsigned int k)
+    constant(unsigned int n, unsigned int k) noexcept
         : identifier(), n{n}, k{k} {}
-    unsigned int dim() const override 
+    unsigned int dim() const noexcept override
     {
         return n;
     }
@@ -105,15 +105,9 @@ struct projection : public identifier
 {
     const unsigned int n;
     const unsigned int k;
-    projection(unsigned int n, unsigned int k)
-        : identifier(), n{n}, k{k} 
-    {
-        if(k == 0 || k > n)
-        {
-            throw parse_error("Invalid projection indices: P" + std::to_string(n) + "_" + std::to_string(k));
-        }
-    }
-    unsigned int dim() const override
+    projection(unsigned int n, unsigned int k) noexcept
+        : identifier(), n{n}, k{k} {}
+    unsigned int dim() const noexcept override
     {
         return n;
     }
@@ -129,9 +123,9 @@ struct projection : public identifier
 
 struct successor : public identifier 
 {
-    successor()
+    successor() noexcept
         : identifier() {}
-    unsigned int dim() const override 
+    unsigned int dim() const noexcept override
     {
         return 1;
     }
@@ -150,13 +144,13 @@ struct composition : public expression
     std::shared_ptr<expression> f;
     std::vector<std::shared_ptr<expression>> gs;
     unsigned int _dim;
-    unsigned int dim() const override
+    unsigned int dim() const noexcept override
     {
         return _dim;
     }
     composition(const std::shared_ptr<expression>& f,
                 const std::vector<std::shared_ptr<expression>>& gs,
-                unsigned int dim)
+                unsigned int dim) noexcept
     : f(f), gs(gs), _dim(dim) {}
     static std::unique_ptr<composition> create(const std::shared_ptr<expression>& f, const std::vector<std::shared_ptr<expression>>& gs)
     {
@@ -182,8 +176,7 @@ struct composition : public expression
     }
     natural eval(const std::vector<natural> &operands) const override
     {
-        std::vector<natural> vs;
-        vs.resize(operands.size());
+        std::vector<natural> vs(gs.size());
         std::transform(gs.begin(), gs.end(), vs.begin(), [&operands](std::shared_ptr<expression> g){
             return g->eval(operands);
         });
@@ -210,11 +203,11 @@ struct primitive_recursion : public expression
     std::shared_ptr<expression> f;
     std::shared_ptr<expression> g;
     unsigned int _dim;
-    unsigned int dim() const override
+    unsigned int dim() const noexcept override
     {
         return _dim;
     }
-    primitive_recursion(const std::shared_ptr<expression>& f, const std::shared_ptr<expression>& g, unsigned int dim)
+    primitive_recursion(const std::shared_ptr<expression>& f, const std::shared_ptr<expression>& g, unsigned int dim) noexcept
     : f(f), g(g), _dim(dim) {}
     static std::unique_ptr<primitive_recursion> create(const std::shared_ptr<expression>& f, const std::shared_ptr<expression>& g)
     {
@@ -249,11 +242,11 @@ struct minimization : public expression
 {
     std::shared_ptr<expression> f;
     unsigned int _dim;
-    unsigned int dim() const override
+    unsigned int dim() const noexcept override
     {
         return _dim;
     }
-    minimization(const std::shared_ptr<expression>& f, unsigned int dim)
+    minimization(const std::shared_ptr<expression>& f, unsigned int dim) noexcept
     : f(f), _dim(dim) {}
     static std::unique_ptr<minimization> create(const std::shared_ptr<expression>& f)
     {
@@ -284,13 +277,13 @@ struct minimization : public expression
 struct atomic_exp : public expression
 {
     std::shared_ptr<identifier> idt;
-    atomic_exp(std::shared_ptr<identifier> idt)
+    atomic_exp(std::shared_ptr<identifier> idt) noexcept
         : idt(idt) {}
     static std::unique_ptr<atomic_exp> create(std::shared_ptr<identifier> idt)
     {
         return std::make_unique<atomic_exp>(idt);
     }
-    unsigned int dim() const override
+    unsigned int dim() const noexcept override
     {
         return idt->dim();
     }

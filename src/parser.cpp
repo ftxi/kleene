@@ -20,165 +20,183 @@ std::ostream& operator<<(std::ostream& os, token_t t) {
     return os; // optional: silence compiler warning
 }
 
+std::unique_ptr<parser> parser::create(std::string input)
+{
+    auto res = std::unique_ptr<parser>(new parser(input));
+    res->cache.pos = 0;
+    res->next_token();
+    return res;
+}
+
+void parser::set_input(const std::string &input)
+{
+    this->input = input;
+    cache.pos = 0;
+    next_token();
+}
+
 /****** Lexer ******/
 
 void parser::next_token()
- {
+{
     // Skip whitespace (excluding newlines)
-    while (pos < input.size() && (input[pos] == ' ' || input[pos] == '\t' || input[pos] == '\r')) {
-        pos++;
+    while (cache.pos < input.size() && (input[cache.pos] == ' ' || input[cache.pos] == '\t' || input[cache.pos] == '\r')) {
+        cache.pos++;
     }
 
-    if(input[pos] == ';')
+    if(input[cache.pos] == ';')
     {
         // Skip comment until newline or end of input
-        pos++; // Skip the ';'
-        while (pos < input.size() && input[pos] != '\n') {
-            pos++;
+        cache.pos++; // Skip the ';'
+        while (cache.pos < input.size() && input[cache.pos] != '\n') {
+            cache.pos++;
         }
-        // After skipping comment, get the next token
+        // After skipping comment, get the next cache.token
         next_token();
         return;
     }
     
     // Check for end of input
-    if (pos >= input.size()) {
-        token = token_t::END;
+    if (cache.pos >= input.size()) {
+        cache.token = token_t::END;
         return;
     }
     
-    switch (input[pos]) 
+    switch (input[cache.pos]) 
     {
     case '\n':
-        token = token_t::NEWLINE;
-        pos++;
+        cache.token = token_t::NEWLINE;
+        cache.pos++;
         break;
         
     case '=':
-        token = token_t::EQUAL;
-        pos++;
+        cache.token = token_t::EQUAL;
+        cache.pos++;
         break;
         
     case '(':
-        token = token_t::LEFT_PAREN;
-        pos++;
+        cache.token = token_t::LEFT_PAREN;
+        cache.pos++;
         break;
         
     case ')':
-        token = token_t::RIGHT_PAREN;
-        pos++;
+        cache.token = token_t::RIGHT_PAREN;
+        cache.pos++;
         break;
         
     case ',':
-        token = token_t::COMMA;
-        pos++;
+        cache.token = token_t::COMMA;
+        cache.pos++;
         break;
         
     case '@':
-        token = token_t::PR_SYM;
-        pos++;
+        cache.token = token_t::PR_SYM;
+        cache.pos++;
         break;
         
     case '$':
-        token = token_t::MIN_SYM;
-        pos++;
+        cache.token = token_t::MIN_SYM;
+        cache.pos++;
         break;
         
     case 'C':
         // CONST: C<num>_<num>
-        pos++;
-        if (pos >= input.size() || !isdigit(input[pos])) {
+        cache.pos++;
+        if (cache.pos >= input.size() || !isdigit(input[cache.pos])) {
             throw parse_error("Expected digit after 'C'");
         }
         // Read first number
-        num1 = 0;
-        while (pos < input.size() && isdigit(input[pos])) {
-            num1 = num1 * 10 + (input[pos] - '0');
-            pos++;
+        cache.num1 = 0;
+        while (cache.pos < input.size() && isdigit(input[cache.pos])) {
+            cache.num1 = cache.num1 * 10 + (input[cache.pos] - '0');
+            cache.pos++;
         }
-        if (pos >= input.size() || input[pos] != '_') {
-            throw parse_error("Expected '_' in CONST token");
+        if (cache.pos >= input.size() || input[cache.pos] != '_') {
+            throw parse_error("Expected '_' in CONST cache.token");
         }
-        pos++; // Skip '_'
-        if (pos >= input.size() || !isdigit(input[pos])) {
-            throw parse_error("Expected digit after '_' in CONST token");
+        cache.pos++; // Skip '_'
+        if (cache.pos >= input.size() || !isdigit(input[cache.pos])) {
+            throw parse_error("Expected digit after '_' in CONST cache.token");
         }
         // Read second number
-        num2 = 0;
-        while (pos < input.size() && isdigit(input[pos])) {
-            num2 = num2 * 10 + (input[pos] - '0');
-            pos++;
+        cache.num2 = 0;
+        while (cache.pos < input.size() && isdigit(input[cache.pos])) {
+            cache.num2 = cache.num2 * 10 + (input[cache.pos] - '0');
+            cache.pos++;
         }
-        token = token_t::CONST;
+        cache.token = token_t::CONST;
         break;
         
     case 'P':
-        // PROJ: P^<num>_<num>
-        pos++;
-        if (pos >= input.size() || !isdigit(input[pos])) {
+        // PROJ: P<num>_<num>
+        cache.pos++;
+        if (cache.pos >= input.size() || !isdigit(input[cache.pos])) {
             throw parse_error("Expected digit after 'P'");
         }
         // Read first number
-        num1 = 0;
-        while (pos < input.size() && isdigit(input[pos])) {
-            num1 = num1 * 10 + (input[pos] - '0');
-            pos++;
+        cache.num1 = 0;
+        while (cache.pos < input.size() && isdigit(input[cache.pos])) {
+            cache.num1 = cache.num1 * 10 + (input[cache.pos] - '0');
+            cache.pos++;
         }
-        if (pos >= input.size() || input[pos] != '_') {
-            throw parse_error("Expected '_' in PROJ token");
+        if (cache.pos >= input.size() || input[cache.pos] != '_') {
+            throw parse_error("Expected '_' in PROJ cache.token");
         }
-        pos++; // Skip '_'
-        if (pos >= input.size() || !isdigit(input[pos])) {
-            throw parse_error("Expected digit after '_' in PROJ token");
+        cache.pos++; // Skip '_'
+        if (cache.pos >= input.size() || !isdigit(input[cache.pos])) {
+            throw parse_error("Expected digit after '_' in PROJ cache.token");
         }
         // Read second number
-        num2 = 0;
-        while (pos < input.size() && isdigit(input[pos])) {
-            num2 = num2 * 10 + (input[pos] - '0');
-            pos++;
+        cache.num2 = 0;
+        while (cache.pos < input.size() && isdigit(input[cache.pos])) {
+            cache.num2 = cache.num2 * 10 + (input[cache.pos] - '0');
+            cache.pos++;
         }
-        token = token_t::PROJ;
+        if(cache.num1 == 0 || cache.num2 > cache.num1)
+        {
+            throw parse_error("Invalid projection indices: P" + std::to_string(cache.num2) + "_" + std::to_string(cache.num1));
+        }
+        cache.token = token_t::PROJ;
         break;
         
     case 'S':
-        token = token_t::SUCC;
-        pos++;
+        cache.token = token_t::SUCC;
+        cache.pos++;
         break;
         
     default:
         // VARIABLE: starts with lowercase, followed by alphanumerics
-        if (islower(input[pos])) {
-            var_name.clear();
-            var_name += input[pos];
-            pos++;
-            while (pos < input.size() && isalnum(input[pos])) {
-                var_name += input[pos];
-                pos++;
+        if (islower(input[cache.pos])) {
+            cache.var_name.clear();
+            cache.var_name += input[cache.pos];
+            cache.pos++;
+            while (cache.pos < input.size() && isalnum(input[cache.pos])) {
+                cache.var_name += input[cache.pos];
+                cache.pos++;
             }
-            token = token_t::VARIABLE;
+            cache.token = token_t::VARIABLE;
         }
-        else if(isdigit(input[pos])) {
-            num2 = num1 = 0;
-            while (pos < input.size() && isdigit(input[pos])) {
-                num2 = num2 * 10 + (input[pos] - '0');
-                pos++;
+        else if(isdigit(input[cache.pos])) {
+            cache.num2 = cache.num1 = 0;
+            while (cache.pos < input.size() && isdigit(input[cache.pos])) {
+                cache.num2 = cache.num2 * 10 + (input[cache.pos] - '0');
+                cache.pos++;
             }
-            token = token_t::NUM;
+            cache.token = token_t::NUM;
         }
         else {
-            throw parse_error(std::string("Unexpected character: '") + input[pos] + "'");
+            throw parse_error(std::string("Unexpected character: '") + input[cache.pos] + "'");
         }
         break;
     }
-    dprint("token:", token);
+    dprint("token:", cache.token, "before", cache.pos);
 }
 
 /****** Parser ******/
 
-#define PARSE_START(t) auto [fallback_token, start_pos, parse_type] =  std::tuple{token,pos,t}; dprint("parse:", t);
+#define PARSE_START(t) auto [old_cache, parse_type] =  std::tuple{cache,t}; dprint("parse:", t);
 #define PARSE_FAIL { \
-    pos = start_pos; \
-    token = fallback_token; \
+    cache = old_cache; \
     dprint("failed to parse", parse_type, "; fallback"); \
     return nullptr; \
 }
@@ -187,28 +205,33 @@ std::shared_ptr<identifier> parser::parse_identifer()
 {
     PARSE_START("identifer");
     std::shared_ptr<identifier> result = nullptr;
-    switch(token)
+    switch(cache.token)
     {
         case token_t::CONST: // parse constant
         case token_t::NUM: // number is just a syntatic sugar for C^0_k
-            result = std::make_shared<constant>(num1, num2);
+            result = std::make_shared<constant>(cache.num1, cache.num2);
             next_token();
-            return result;
+            break;
         case token_t::PROJ: // parse projection
-            result = std::make_shared<projection>(num1, num2);
+            result = std::make_shared<projection>(cache.num1, cache.num2);
             next_token();
-            return result;
+            break;
         case token_t::SUCC: // parse successor
             result = std::make_shared<successor>();
             next_token();
-            return result;
+            break;
         case token_t::VARIABLE: // parse variable
-            result = get_variable(var_name);
+            result = get_variable(cache.var_name);
+            if(result == nullptr)
+            {
+                throw parse_error("Undefined variable: " + cache.var_name);
+            }
             next_token();
-            return result;
+            break;
         default:
             PARSE_FAIL;
     }
+    dprint("parsed identifer:", result->show_type());
     return result;
 }
 
@@ -219,19 +242,19 @@ std::unique_ptr<composition> parser::parse_composition()
     std::shared_ptr<expression> f = parse_atomic_exp();
     if(f == nullptr) PARSE_FAIL;
     std::vector<std::shared_ptr<expression>> gs;
-    if(token != token_t::LEFT_PAREN) PARSE_FAIL;
+    if(cache.token != token_t::LEFT_PAREN) PARSE_FAIL;
     next_token();
     // parse gs
-    while(token != token_t::RIGHT_PAREN)
+    while(cache.token != token_t::RIGHT_PAREN)
     {
         std::shared_ptr<expression> g = parse_expression();
         if(g == nullptr) PARSE_FAIL;
         gs.push_back(g);
-        if(token == token_t::COMMA)
+        if(cache.token == token_t::COMMA)
         {
             next_token();
         }
-        else if(token != token_t::RIGHT_PAREN)
+        else if(cache.token != token_t::RIGHT_PAREN)
         {
             throw parse_error("Expect ')' in compositon");
         }
@@ -245,7 +268,7 @@ std::unique_ptr<primitive_recursion> parser::parse_primitive_recursion()
     PARSE_START("<primitive-recursion>");
     std::shared_ptr<expression> f = parse_comp_exp();
     if(f == nullptr) PARSE_FAIL;
-    if(token != token_t::PR_SYM) PARSE_FAIL;
+    if(cache.token != token_t::PR_SYM) PARSE_FAIL;
     next_token();
     std::shared_ptr<expression> g = parse_comp_exp();
     if(g == nullptr)
@@ -258,7 +281,7 @@ std::unique_ptr<primitive_recursion> parser::parse_primitive_recursion()
 std::unique_ptr<minimization> parser::parse_minimization()
 {
     PARSE_START("<minimization>");
-    if(token != token_t::MIN_SYM) PARSE_FAIL;
+    if(cache.token != token_t::MIN_SYM) PARSE_FAIL;
     next_token();
     std::shared_ptr<expression> f = parse_comp_exp();
     if(f == nullptr)
@@ -320,7 +343,7 @@ std::unique_ptr<expression> parser::parse_comp_exp()
 std::unique_ptr<expression> parser::parse_atomic_exp()
 {
     PARSE_START("<atomic-exp>");
-    if(token == token_t::LEFT_PAREN)
+    if(cache.token == token_t::LEFT_PAREN)
     {
         next_token();
         std::unique_ptr<expression> expr = parse_expression();
@@ -328,7 +351,7 @@ std::unique_ptr<expression> parser::parse_atomic_exp()
         {
             throw parse_error("Expect expression between parenthesis");
         }
-        if(token != token_t::RIGHT_PAREN)
+        if(cache.token != token_t::RIGHT_PAREN)
         {
             throw parse_error("Expect ')' after '('");
         }
@@ -343,22 +366,14 @@ std::unique_ptr<expression> parser::parse_atomic_exp()
     }
 }
 
-#undef PARSE_FAIL
-#define PARSE_FAIL { \
-    pos = start_pos; \
-    token = fallback_token; \
-    dprint("parse", parse_type, "failed; fallback"); \
-    return; \
-}
-
-void parser::parse_line()
+std::shared_ptr<variable> parser::parse_line()
 {
     PARSE_START("<line>");
     // parse lvalue
-    if(token != token_t::VARIABLE) PARSE_FAIL;
-    std::string var_name_local = std::move(var_name);
+    if(cache.token != token_t::VARIABLE) PARSE_FAIL;
+    std::string var_name_local = std::move(cache.var_name);
     next_token();
-    if(token != token_t::EQUAL) PARSE_FAIL;
+    if(cache.token != token_t::EQUAL) PARSE_FAIL;
     next_token();
     // parse rvalue
     std::unique_ptr<expression> rvalue = parse_expression();
@@ -369,24 +384,25 @@ void parser::parse_line()
     // add variable to context
     auto var = std::make_shared<variable>(var_name_local, rvalue->dim(), std::move(rvalue));
     add_variable(var);
+    return var;
 }
 
 void parser::parse()
 {
     try{
-        while(token != token_t::END)
+        while(cache.token != token_t::END)
         {
-            if(token == token_t::NEWLINE)
+            if(cache.token == token_t::NEWLINE)
             {
                 next_token();
                 continue;
             }
             parse_line();
-            if(token == token_t::NEWLINE)
+            if(cache.token == token_t::NEWLINE)
             {
                 next_token();
             }
-            else if(token != token_t::END)
+            else if(cache.token != token_t::END)
             {
                 throw parse_error("Expected end of line");
             }
@@ -394,25 +410,25 @@ void parser::parse()
     }
     catch(const parse_error &err)
     {
-        char var = input[pos];
-        if(pos>0) pos--;
-        while(isspace(input[pos]) && pos > 0)
-            pos--;
-        size_t line_num = std::count(input.begin(), input.begin() + std::min(pos, input.size()), '\n');
+        char var = input[cache.pos];
+        if(cache.pos>0) cache.pos--;
+        while(isspace(input[cache.pos]) && cache.pos > 0)
+            cache.pos--;
+        size_t line_num = std::count(input.begin(), input.begin() + std::min(cache.pos, input.size()), '\n');
         std::cerr << "In line " << line_num << ":\n";
-        size_t start = input.rfind('\n', pos);
+        size_t start = input.rfind('\n', cache.pos);
         if (start == std::string::npos)
             start = 0;
         else
-            start += start < pos ? 1 : 0; // move past '\n'
+            start += start < cache.pos ? 1 : 0; // move past '\n'
 
-        size_t end = input.find('\n', pos);
+        size_t end = input.find('\n', cache.pos);
         if (end == std::string::npos)
             end = input.size();
         
         std::cerr << input.substr(start, end - start) + "\n";
-        std::cerr << std::string(pos-start,' ')+"^ ";
-        std::cerr << token << " here\n";
+        std::cerr << std::string(cache.pos-start,' ')+"^ ";
+        std::cerr << cache.token << " here\n";
         std::cerr << "parse error: " << err.what() << std::endl;
         exit(1);
     }
@@ -420,15 +436,24 @@ void parser::parse()
 
 /****** interpreter ******/
 
+natural parser::eval_var(std::shared_ptr<variable> v, std::vector<natural> operands)
+{
+    return v->eval(operands);
+}
+
 natural parser::eval_var(std::string s, std::vector<natural> operands)
 {
     std::shared_ptr<variable> v = get_variable(s);
+    if(v == nullptr)
+    {
+        throw parse_error("eval_var: Undefined variable: " + s);
+    }
     return v->eval(operands);
 }
 
 /****** help funtions ******/
 
-std::shared_ptr<variable> parser::get_variable(const std::string &name)
+std::shared_ptr<variable> parser::get_variable(const std::string &name) noexcept
 {
     auto it = context.find(name);
     if(it != context.end())
@@ -437,7 +462,7 @@ std::shared_ptr<variable> parser::get_variable(const std::string &name)
     }
     else
     {
-        throw parse_error("Undefined variable: " + name);
+        return nullptr;
     }
 }
 

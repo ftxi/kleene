@@ -34,6 +34,14 @@ add_executable(kleene
 
 target_link_libraries(kleene PRIVATE parser_lib)
 
+# Copy .kl scripts to build directory (for testing)
+file(GLOB TEST_SCRIPTS "${CMAKE_SOURCE_DIR}/tests/*.kl")
+
+add_custom_target(copy_kl_files ALL
+    COMMAND ${CMAKE_COMMAND} -E copy ${TEST_SCRIPTS} "${CMAKE_BINARY_DIR}"
+    COMMENT "Copying all .kl files"
+)
+
 # Enable testing
 enable_testing()
 

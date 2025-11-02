@@ -81,6 +81,23 @@ parse error: Dimension mismatch in primitive recursion: S:N^1 -> N does not matc
 The evaluation of expressions in Kleene is short-cuted. For example, in `C1_n(veryComplicated)`, `veryComplicated` is never evaluated no matter what is applied to it. Similarly, for projection on $k$-th axis, only the $k$-th operand is evaluated.
 
 
+### Usage
+
+Clone/download this repo, go to its base directory and run
+
+```sh
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+If everything is okay, try running the Kleene interpreter by
+```sh
+./kleene meaning_of_life.kl
+```
+which should calculate 42.
+
+For more information, simply type `./kleene --help`.
 
 ### Formal Definition of Kleene Language
 
