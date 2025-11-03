@@ -6,7 +6,7 @@ pred = 0 @ P2_1 ;; x ~> x-1
 minus2 = pred(pred) ;; x ~> x-2
 minus3 = pred(pred(pred)) ;; x ~> x-3
 id = P1_1
-div3cell = $(id @ minus3(P3_2)) ;; n ~> cell(n `div` 2)
+div3cell = $(id @ minus3(P3_2)) ;; n ~> cell(n `div` 3)
 if = P2_1 @ P4_4 ;; if(p,a,b) = if p==0 then a else b
 
 add = id @ S(P3_2)

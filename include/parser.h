@@ -20,7 +20,8 @@
 <primary-exp> ::= <atomic-exp> | '(' <expression> ')'
 <atomic-exp>  ::= <identifer>
 <identifer>   ::= 'C'<num>'_'<num> | 'P'<num>'_'<num> | 'S' | <variable>
-<variable> ::= {'a' | ... | 'z'}{'A' | ... | 'Z' | 'a' | ... | 'z' | '0' | '1' | ... | '9'}*
+<variable> ::= {'a' | ... | 'z'}{'A' | ... | 'Z' | 'a' | ... | 'z' 
+                               | '0' | '1' | ... | '9' | '_'}*
 <comment>  ::= {any character except newline}*
 
 White space (spaces and tabs) can appear between any two tokens and should be ignored.

@@ -81,14 +81,16 @@ parse error: Dimension mismatch in primitive recursion: S:N^1 -> N does not matc
 The evaluation of expressions in Kleene is short-cuted. For example, in `C1_n(veryComplicated)`, `veryComplicated` is never evaluated no matter what is applied to it. Similarly, for projection on $k$-th axis, only the $k$-th operand is evaluated.
 
 
-### Usage
+### Build
+
+Building from source requires a recent c++ compiler and [cmake](https://cmake.org).
 
 Clone/download this repo, go to its base directory and run
 
 ```sh
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build .
 ```
 If everything is okay, try running the Kleene interpreter by
@@ -111,7 +113,8 @@ For more information, simply type `./kleene --help`.
 <primary-exp> ::= <atomic-exp> | '(' <expression> ')'
 <atomic-exp>  ::= <identifer>
 <identifer>   ::= 'C'<num>'_'<num> | 'P'<num>'_'<num> | 'S' | <variable>
-<variable> ::= {'a' | ... | 'z'}{'A' | ... | 'Z' | 'a' | ... | 'z' | '0' | '1' | ... | '9'}*
+<variable> ::= {'a' | ... | 'z'}{'A' | ... | 'Z' | 'a' | ... | 'z' 
+                               | '0' | '1' | ... | '9' | '_'}*
 <comment>  ::= {any character except newline}*
 ```
 White space (spaces and tabs) can appear between any two tokens and should be ignored.

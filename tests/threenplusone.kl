@@ -1,0 +1,22 @@
+
+add = P1_1 @ S(P3_2)
+mul = C1_0 @ add(P3_3, P3_2)
+pred = 0 @ P2_1
+rsub = P1_1 @ pred(P3_2) ; (a,b) ~> b-a
+lt = rsub
+if = P2_2 @ P4_3
+
+; div2cell(a) is the smallest n such that n+n >= a
+; div2cell = $ lt(add(P2_1, P2_1), P2_2)
+div2cell = $(P1_1 @ pred(pred(P3_2)))
+mod2 = rsub(P1_1, mul(div2cell(P1_1),C1_2))
+
+; f(n) = if n `mod` 2 != 0
+;        then 3*n + 1
+;        else n/2
+f = if(mod2(P1_1), S(mul(C1_3, P1_1)), div2cell(P1_1))
+
+rep_apply_f = P1_1 @ f(P3_2)
+collatz = $ pred(rep_apply_f)
+
+main = collatz

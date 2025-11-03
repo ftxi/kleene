@@ -170,7 +170,7 @@ void parser::next_token()
             cache.var_name.clear();
             cache.var_name += input[cache.pos];
             cache.pos++;
-            while (cache.pos < input.size() && isalnum(input[cache.pos])) {
+            while (cache.pos < input.size() && (isalnum(input[cache.pos]) || input[cache.pos] == '_')) {
                 cache.var_name += input[cache.pos];
                 cache.pos++;
             }
