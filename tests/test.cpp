@@ -18,15 +18,57 @@ div = $rsub(S(mul(P3_3,P3_1)),P3_2)
 mod = rsub(mul(P2_2, div(P2_1, P2_2)), P2_1)
 )";
 
+const char* run_program(const char* code, const char* entry, const char* input)
+{
+    static std::string result;
+    result = "[NO OUTPUT]";
+    try {
+        std::vector<natural> operands;
+        std::istringstream iss(input);
+        natural x;
+        while (iss >> x)
+            operands.push_back(x);
+        auto p = parser::create(std::string(code));
+        auto errmsg = p->try_parse();
+        if(errmsg)
+        {
+            result = *errmsg;
+        }
+        else
+        {
+            natural output = p->eval_var(std::string(entry), operands);
+            result = std::to_string(output);
+        }
+    } catch (const std::invalid_argument& e) {
+        result = std::string("Invalid argument: ") + e.what();
+    } catch (const std::out_of_range& e) {
+        result = std::string("Out of range: ") + e.what();
+    } catch (const std::runtime_error& e) {
+        result = std::string("Runtime error: ") + e.what();
+    } catch (const std::exception& e) {
+        result = std::string("Exception: ") + e.what();
+    } catch (...) {
+        result = "Unknown exception";
+    }
+    return result.c_str();
+}
+
 int main(int argc, char* argv[])
 {
-    auto p = parser::create(str);
-    p->parse();
-    std::cout << p->to_string();
-//    std::cout << p->eval_var("div3cell", {15}) << std::endl;
-//    std::cout << p->eval_var("if", {7,33,44}) << std::endl;
-//    std::cout << p->eval_var("minus3", {11}) << std::endl;
-//    std::cout << p->eval_var("mul", {7,8}) << std::endl;
-    std::cout << p->eval_var("mod", {100,7}) << std::endl;
+//    auto p = parser::create(str);
+//    auto errmsg = p->try_parse();
+//    if(errmsg)
+//    {
+//        std::cerr << *errmsg;
+//        return 1;
+//    }
+//    std::cout << p->to_string();
+////    std::cout << p->eval_var("div3cell", {15}) << std::endl;
+////    std::cout << p->eval_var("if", {7,33,44}) << std::endl;
+////    std::cout << p->eval_var("minus3", {11}) << std::endl;
+////    std::cout << p->eval_var("mul", {7,8}) << std::endl;
+//    std::cout << p->eval_var("div", {100,7}) << std::endl;
+    std::cout << run_program("main = S(2)\n"
+                             "id = P1_1 $", "div", "100 7");
     return 0;
 }

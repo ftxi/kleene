@@ -10,6 +10,7 @@
 
 template <std::ranges::input_range R>
 std::string range_to_string(const R& range) {
+#ifdef DEBUGMSG
     std::ostringstream oss;
     oss << '(';
     bool first = true;
@@ -20,6 +21,9 @@ std::string range_to_string(const R& range) {
     }
     oss << ')';
     return oss.str();
+#else
+    return "";
+#endif
 }
 
 template <typename T>

@@ -1,5 +1,7 @@
+; bool.kl
+; some boolean operations
 
-;logical operators
+; logical operators
 or = P1_1 @ C3_1
 and = C1_0 @ P3_3
 

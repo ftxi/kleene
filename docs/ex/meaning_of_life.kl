@@ -1,3 +1,6 @@
+; meaning_of_life.kl
+; output 42
+
 id = P1_1
 add = id @ S(P3_2)
 mul = C1_0 @ add(P3_3, P3_2)

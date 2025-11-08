@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kleene Interpreter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Try Kleene Online</h1>
+        
+        <div class="input-group">
+            <label for="code">Write code/load example</label>
+            <select id="examplesSelect" style="display:none;">
+                <option value="">--- Select example ---</option>
+            </select>
+            <button id="loadExamplesBtn">load</button>
+            <textarea id="code" spellcheck="false" placeholder="Enter code here...">; Welcome to Kleene Language
+; Syntax:
+;   comments starts with a semicolon, everything after it is ignored until newline
+;   for each line: &lt;variable&gt; = &lt;expression&gt;
+;   - each variable should start with a lower case character
+;   - variables can be defined only once
+;   An expression is a variable defined before this line or one of the following:
+;   - the constant function C&lt;n&gt;_&lt;k&gt;, or a number &lt;k&gt; (treated as C0_&lt;n&gt;)
+;   - the projection function P&lt;n&gt;_&lt;k&gt;
+;   - the successor function S
+;   - composition of functions &lt;f&gt;(&lt;g1&gt;,...,&lt;gn&gt;) 
+;   - primitive recursion &lt;f&gt;&amp;&lt;g&gt;
+;   - minimization $&lt;f&gt;
+;   all &lt;n&gt; and &lt;k&gt; above are integers&ge;0. &lt;f&gt;, &lt;g&gt;,... are expressions
+;   use parenthesis when there is a need to specify the order of computation
+; click "run" to evaluated the entry point specified in "entry" block with operands in "input" block
+;
+; Example:
+
+plus2 = S(S) ; plus2(n) = (n+1)+1
+main = plus2(40)
+</textarea>
+        </div>
+
+        <div class="input-group">
+            <label for="entry">Entry</label>
+            <input type="text" id="entry"  spellcheck="false" placeholder="If not specified, entry point is 'main'">
+        </div>
+
+        <div class="input-group">
+            <label for="input">Input</label>
+            <input type="text" id="input" placeholder="Enter operands for entry point: natural numbers, space-separated (e.g., 1 2 3 4)">
+        </div>
+
+        <button id="runBtn">Run</button>
+
+        <div class="output-section">
+            <label>Output</label>
+            <div id="output" class="output-box">Output will appear here...</div>
+        </div>
+        <p>More information: <a href="https://github.com/ftxi/kleene">github repository for the Kleene language</a></p>
+    </div>
+
+    <!-- Load the Emscripten-generated JavaScript -->
+    <script src="library.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

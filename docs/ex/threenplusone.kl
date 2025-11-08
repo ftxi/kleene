@@ -1,3 +1,12 @@
+; threenplusone.kl
+; f(n) = 3*n+1 if n is odd
+;        n/2   if n is even
+; starting from n, calculate
+; f(n), f(f(n)), f(f(f(n))), ....
+; after how many steps, the result becomes one?
+;
+; there is no known primitive recursive method to calculate the number of steps needed
+; because whether that sequence contains 1 is still an open problem (Collatz's conjecture)
 
 add = P1_1 @ S(P3_2)
 mul = C1_0 @ add(P3_3, P3_2)

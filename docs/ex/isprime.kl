@@ -1,3 +1,5 @@
+; isprime.kl
+; test if the input number is prime (returns 1 if true, 0 otherwise)
 
 ; +, - and *
 add = P1_1 @ S(P3_2)

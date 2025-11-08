@@ -16,10 +16,10 @@ public:
         : std::runtime_error(message) {}
 };
 
-class compile_error : public std::runtime_error 
+class interprete_error : public std::runtime_error 
 {
 public:
-    explicit compile_error(const std::string& message)
+    explicit interprete_error(const std::string& message)
         : std::runtime_error(message) {}
 };
 

@@ -68,6 +68,7 @@ public:
     std::unique_ptr<expression> parse_atomic_exp();
     std::shared_ptr<variable> parse_line();
     void parse();
+    std::optional<std::string> try_parse();
     // Interpreter
     natural eval_var(std::shared_ptr<variable> v, std::vector<natural> operands);
     natural eval_var(std::string s, std::vector<natural> operands);

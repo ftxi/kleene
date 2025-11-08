@@ -389,33 +389,41 @@ std::shared_ptr<variable> parser::parse_line()
 
 void parser::parse()
 {
-    try{
-        while(cache.token != token_t::END)
+    while(cache.token != token_t::END)
+    {
+        if(cache.token == token_t::NEWLINE)
         {
-            if(cache.token == token_t::NEWLINE)
-            {
-                next_token();
-                continue;
-            }
-            parse_line();
-            if(cache.token == token_t::NEWLINE)
-            {
-                next_token();
-            }
-            else if(cache.token != token_t::END)
-            {
-                throw parse_error("Expected end of line");
-            }
+            next_token();
+            continue;
         }
+        parse_line();
+        if(cache.token == token_t::NEWLINE)
+        {
+            next_token();
+        }
+        else if(cache.token != token_t::END)
+        {
+            throw parse_error("Expected end of line");
+        }
+    }
+}
+
+std::optional<std::string> parser::try_parse()
+{
+    try
+    {
+        parse();
+        return std::nullopt;
     }
     catch(const parse_error &err)
     {
+        std::ostringstream os;
         char var = input[cache.pos];
         if(cache.pos>0) cache.pos--;
         while(isspace(input[cache.pos]) && cache.pos > 0)
             cache.pos--;
         size_t line_num = std::count(input.begin(), input.begin() + std::min(cache.pos, input.size()), '\n');
-        std::cerr << "In line " << line_num << ":\n";
+        os << "In line " << line_num << ":\n";
         size_t start = input.rfind('\n', cache.pos);
         if (start == std::string::npos)
             start = 0;
@@ -426,11 +434,11 @@ void parser::parse()
         if (end == std::string::npos)
             end = input.size();
         
-        std::cerr << input.substr(start, end - start) + "\n";
-        std::cerr << std::string(cache.pos-start,' ')+"^ ";
-        std::cerr << cache.token << " here\n";
-        std::cerr << "parse error: " << err.what() << std::endl;
-        exit(1);
+        os << input.substr(start, end - start) + "\n";
+        os << std::string(cache.pos-start,' ')+"^ ";
+        os << cache.token << " here\n";
+        os << "parse error: " << err.what() << std::endl;
+        return os.str();
     }
 }
 

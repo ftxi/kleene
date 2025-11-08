@@ -248,3 +248,11 @@ cython_debug/
 *.exe
 *.out
 *.app
+
+### emscripten
+
+*.bc
+*.ll
+*.data
+*.mem
+*.map
