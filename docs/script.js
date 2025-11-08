@@ -29,7 +29,7 @@ document.getElementById('runBtn').addEventListener('click', function() {
     const runBtn = document.getElementById('runBtn');
 
     // Validate entry (no whitespaces)
-    if (!/^\S+$/.test(entry)) {
+    if (entry && entry.length !== 0 && !/^\S+$/.test(entry)) {
         outputBox.textContent = 'Error: Entry must be an identifer (whitespaces not allowed)';
         outputBox.className = 'output-box error';
         return;
