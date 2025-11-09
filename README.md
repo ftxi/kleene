@@ -17,7 +17,7 @@ And there are three ways to build up custom functions:
 + Composition. If $f:\mathbb{N}^n\to\mathbb{N}$ is recursive and $g_1,g_2,\ldots,g_n$ are functions $\mathbb{N}^k\to\mathbb{N}$, then $h(\vec x)=f(g_1(\vec x),\ldots,g_n(\vec x))$ is recursive. If $n=3$, this is written as `h=f(g1, g2, g3)` in the Kleene language.
 + Primitive recursion. If $f:\mathbb{N}^k\to\mathbb{N}$ and $g:\mathbb{N}^{k+2}\to\mathbb{N}$ are recursive, then so is $h:\mathbb{N}^{k+1}\to\mathbb{N}$ defined by
     - $h(0, \vec x) = f(\vec x)$
-    - $h(n+1,x) = g(n,f(n,\vec x), \vec x)$
+    - $h(n+1,\vec x) = g(n,f(n,\vec x), \vec x)$
     - This is written as `h = f @ g`.
 + Minimization. If $g:\mathbb{N}^{k+1}\to\mathbb{N}$ is recursive, then so is $f:\mathbb{N}^k\to\mathbb{N}$ defined as $f(x)$ being the least $n$ such that $g(n,\vec x)=0$ (provided that such $n$ existed for all $x$). This is written as `f = $g`.
 

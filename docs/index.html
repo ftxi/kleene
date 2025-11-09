@@ -17,26 +17,24 @@
             </select>
             <button id="loadExamplesBtn">load</button>
             <textarea id="code" spellcheck="false" placeholder="Enter code here...">; Welcome to Kleene Language
-; Syntax:
-;   comments starts with a semicolon, everything after it is ignored until newline
-;   for each line: &lt;variable&gt; = &lt;expression&gt;
-;   - each variable should start with a lower case character
-;   - variables can be defined only once
-;   An expression is a variable defined before this line or one of the following:
-;   - the constant function C&lt;n&gt;_&lt;k&gt;, or a number &lt;k&gt; (treated as C0_&lt;n&gt;)
-;   - the projection function P&lt;n&gt;_&lt;k&gt;
-;   - the successor function S
-;   - composition of functions &lt;f&gt;(&lt;g1&gt;,...,&lt;gn&gt;) 
-;   - primitive recursion &lt;f&gt;&amp;&lt;g&gt;
-;   - minimization $&lt;f&gt;
-;   all &lt;n&gt; and &lt;k&gt; above are integers&ge;0. &lt;f&gt;, &lt;g&gt;,... are expressions
-;   use parenthesis when there is a need to specify the order of computation
-; click "run" to evaluated the entry point specified in "entry" block with operands in "input" block
-;
-; Example:
-
-plus2 = S(S) ; plus2(n) = (n+1)+1
-main = plus2(40)
+; comments starts with a semicolon
+; syntax: &lt;variable&gt; = &lt;expression&gt;
+id = P1_1 ;id(x) = x is the projection from totally one value to the first value
+tmp = S(P3_2) ; tmp(x1,x2,x3) = S(x2) = x2+1
+; S(P3_2) is a composition of projection and successor
+; the successor S is S(x) = x+1
+add = id @ tmp; add(x,y) = x+y defined by primitive recursion operator @
+; add(x1,x2) = if x1=0 then id(x2) else tmp(x1-1,add(x1-1,x2),x2)
+; expressions can be composed together, so above is equivalent to
+add_ = P1_1 @ S(P3_2) ; variables can be defined only once
+not = 1 @ C2_0 ; not(0) = 1; not(n+1) = 0
+; C2_0 is the constant function receiving 2 operand and output 0
+; 1 is the syntactic sugar for C0_1, i.e. constant 1
+pred = 0 @ P2_1
+solution = $ not(pred(pred(add(P2_1,P2_2)))) ; solution(y) = the smallest x with not(max{0,x+y-2})=0
+main = add(40,solution(1)) ; main is the default entry point, click "run" to evaluate
+; alternatively, change the "entry" block to solution, fill the operands in "input" block
+; and then click "run" to evaluate solution(&lt;operands&gt;)
 </textarea>
         </div>
 

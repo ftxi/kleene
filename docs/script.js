@@ -111,6 +111,8 @@ fetchExamples();
 examplesBtn.addEventListener('click', async () => {
     const file = examplesSelect.value;
     if (!file) return;
+    const proceed = confirm("Loading this example will discard the current code. Proceed?");
+    if (!proceed) return;
     const res = await fetch(`./ex/${file}`);
     const content = await res.text();
     codeArea.value = content;
